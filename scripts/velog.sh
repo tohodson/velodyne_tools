@@ -11,7 +11,7 @@
 # SETUP INSTRUCTIONS
 # Create a file named 99.velo-logger.rules in /etc/udev/rules.d
 # and write the rule:
-# KERNEL=="sd?1", SUBSYSTEMS=="usb", ATTRS{product}=="USB DISK", SYMLINK+="logger", RUN+="/tmp/velog.sh"
+# KERNEL=="sd?1", SUBSYSTEMS=="usb", ATTRS{bInterfaceClass}=="08", SYMLINK+="logger", RUN+="/tmp/velog.sh"
 
 interval="2"
 timestamp=$(date '+%Y%j-%H:%M') 
@@ -19,9 +19,11 @@ firing_file=${timestamp}_laser.pcap
 pos_file=${timestamp}_pos.pcap
 
 set -e
-trap 'kill -TERM -$$' SIGINT SIGTERM EXIT
+trap 'kill -TERM -$$; umount /dev/logger' SIGINT SIGTERM EXIT
+# add ;unmount comand to trap
 
-# consider a trap for SIGPIPE on disk full
+mount /dev/logger/ /home/pi/log 
+
 tcpdump -n port 2368 -s 0 -i eth0 /dev/logger/${firing_file} &
 tcpdump -n port 8308 -s 0 -i eth0 /dev/logger/${pos_file} &
 
